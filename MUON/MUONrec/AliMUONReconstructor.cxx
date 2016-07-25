@@ -95,13 +95,15 @@
 #include "AliMUONPreClusterFinderV3.h"
 #include "AliMUONSimpleClusterServer.h"
 #include "AliMUONTracker.h"
+#include "AliMUONTriggerAlgoChecker.h"
 #include "AliMUONTriggerCircuit.h"
+#include "AliMUONTriggerElectronics.h"
 #include "AliMUONTriggerStoreV1.h"
+#include "AliMUONTriggerStoreV2.h"
+#include "AliMUONTriggerUtilities.h"
 #include "AliMUONVClusterFinder.h"
 #include "AliMUONVClusterServer.h"
 #include "AliMUONVTrackStore.h"
-#include "AliMUONTriggerElectronics.h"
-#include "AliMUONTriggerUtilities.h"
 
 #include "AliMpArea.h"
 #include "AliMpCDB.h"
@@ -135,10 +137,12 @@ fTriggerCircuit(0x0),
 fCalibrationData(0x0),
 fDigitCalibrator(0x0),
 fTriggerStore(0x0),
+fTriggerStoreReco(0x0),
 fTrackStore(0x0),
 fClusterStore(0x0),
 fTriggerProcessor(0x0),
 fTriggerUtilities(0x0),
+fTriggerAlgoChecker(0x0),
 fClusterServers(),
 fTrackers(),
 fShouldCalibrate(kTRUE)
@@ -186,10 +190,12 @@ AliMUONReconstructor::~AliMUONReconstructor()
   delete fTransformer;
   delete fTriggerCircuit;
   delete fTriggerStore;
+  delete fTriggerStoreReco;
   delete fTrackStore;
   delete fClusterStore;
   delete fTriggerProcessor;
   delete fTriggerUtilities;
+  delete fTriggerAlgoChecker;
 
   delete AliMpSegmentation::Instance(false);
   delete AliMpDDLStore::Instance(false);  
@@ -218,7 +224,8 @@ AliMUONReconstructor::Calibrate(AliMUONVDigitStore& digitStore) const
 void
 AliMUONReconstructor::ConvertDigits(AliRawReader* rawReader, 
                                     AliMUONVDigitStore* digitStore,
-                                    AliMUONVTriggerStore* triggerStore) const
+                                    AliMUONVTriggerStore* triggerStore,
+                                    AliMUONVTriggerStore* triggerStoreReco) const
 {
   /// Convert raw data into digit and trigger stores
   CreateDigitMaker();
@@ -227,6 +234,7 @@ AliMUONReconstructor::ConvertDigits(AliRawReader* rawReader,
   if ( GetRecoParam()->GetEventSpecie() == AliRecoParam::kCalib ) {
     digitStore->Clear(); // Remove possible digits from previous event
     triggerStore->Clear(); // Remove possible triggers from previous event
+    if ( triggerStoreReco ) triggerStoreReco->Clear(); // Remove possible triggers from previous event
     AliInfo("Calibration event: do not convert digits");
     return;
   }
@@ -236,6 +244,10 @@ AliMUONReconstructor::ConvertDigits(AliRawReader* rawReader,
   fDigitMaker->Raw2Digits(rawReader,digitStore,triggerStore);
   AliCodeTimerStop(Form("%s::Raw2Digits(AliRawReader*,AliMUONVDigitStore*,AliMUONVTriggerStore*)",
                          fDigitMaker->ClassName()))
+  if ( triggerStoreReco ) {
+    TriggerElectronics()->Digits2Trigger(*digitStore,*triggerStoreReco);
+    TriggerAlgoChecker()->CompareLocalResponse(*triggerStore,*triggerStoreReco);
+  }
   Calibrate(*digitStore);
 }
 
@@ -253,6 +265,10 @@ AliMUONReconstructor::ConvertDigits(AliRawReader* rawReader, TTree* digitsTree) 
   {
     ok = ok && TriggerStore()->Connect(*digitsTree,kFALSE);
   }
+  if ( TriggerStoreReco() )
+  {
+    ok = ok && TriggerStoreReco()->Connect(*digitsTree,kFALSE);
+  }
   
   if (!ok)
   {
@@ -260,7 +276,7 @@ AliMUONReconstructor::ConvertDigits(AliRawReader* rawReader, TTree* digitsTree) 
   }
   else
   {
-    ConvertDigits(rawReader,DigitStore(),TriggerStore());
+    ConvertDigits(rawReader,DigitStore(),TriggerStore(),TriggerStoreReco());
     AliCodeTimerStart("Fill digits")
     digitsTree->Fill();
     AliCodeTimerStop("Fill digits")
@@ -616,17 +632,11 @@ AliMUONReconstructor::CreateCalibrator() const
 void
 AliMUONReconstructor::ResponseRemovingChambers(AliMUONVTriggerStore* triggerStore) const
 {
-  /// Update trigger information with informatins obtained after
+  /// Update trigger information with information obtained after
   /// re-calculation of trigger response
   AliCodeTimerAuto("",0);
 
-  if ( ! fCalibrationData )
-    CreateCalibrationData();
-
-  if ( ! fTriggerProcessor )
-    fTriggerProcessor = new AliMUONTriggerElectronics(fCalibrationData);
-
-  fTriggerProcessor->ResponseRemovingChambers(*triggerStore);
+  TriggerElectronics()->ResponseRemovingChambers(*triggerStore);
 }
 
 //_____________________________________________________________________________
@@ -664,7 +674,8 @@ AliMUONReconstructor::DigitStore() const
 //_____________________________________________________________________________
 void
 AliMUONReconstructor::FillTreeR(AliMUONVTriggerStore* triggerStore,
-                                TTree& clustersTree) const
+                                TTree& clustersTree,
+                                AliMUONVTriggerStore* triggerStoreReco) const
 {
   /// Write the trigger and cluster information into TreeR
 
@@ -687,6 +698,15 @@ AliMUONReconstructor::FillTreeR(AliMUONVTriggerStore* triggerStore,
     if (!ok)
     {
       AliError("Could not create triggerStore branches in TreeR");
+    }
+  }
+
+  if ( triggerStoreReco ) {
+    ResponseRemovingChambers(triggerStoreReco);
+    ok = triggerStoreReco->Connect(clustersTree,alone);
+    if (!ok)
+    {
+      AliError("Could not create triggerStoreReco branches in TreeR");
     }
   }
 
@@ -774,9 +794,9 @@ AliMUONReconstructor::Reconstruct(AliRawReader* rawReader, TTree* clustersTree) 
     return;
   }
   
-  ConvertDigits(rawReader,DigitStore(),TriggerStore());
+  ConvertDigits(rawReader,DigitStore(),TriggerStore(),TriggerStoreReco());
 
-  FillTreeR(TriggerStore(),*clustersTree);
+  FillTreeR(TriggerStore(),*clustersTree,TriggerStoreReco());
 }
 
 //_____________________________________________________________________________
@@ -821,6 +841,17 @@ AliMUONReconstructor::Reconstruct(TTree* digitsTree, TTree* clustersTree) const
       AliInfo(Form("Created %s from %s",fTriggerStore->ClassName(),digitsTree->GetName()));
     }
   }
+  if ( ! fTriggerStoreReco ) {
+    fTriggerStoreReco = AliMUONVTriggerStore::Create(*digitsTree,kTRUE);
+    if (!fTriggerStoreReco)
+    {
+      AliInfo(Form("No reconstructed trigger store from %s",digitsTree->GetName()));
+    }
+    else
+    {
+      AliInfo(Form("Created %s from %s",fTriggerStoreReco->ClassName(),digitsTree->GetName()));
+    }
+  }
   
   if (!fTriggerStore && !fDigitStore)
   {
@@ -851,6 +882,17 @@ AliMUONReconstructor::Reconstruct(TTree* digitsTree, TTree* clustersTree) const
       return;
     }
   }
+  if ( fTriggerStoreReco )
+  {
+    fTriggerStoreReco->Clear();
+    Bool_t alone = ( fDigitStore ? kFALSE : kTRUE );
+    Bool_t ok = fTriggerStoreReco->Connect(*digitsTree,alone);
+    if (!ok)
+    {
+      AliError("Could not connect recoTriggerStore to digitsTree");
+      return;
+    }
+  }
   
   digitsTree->GetEvent(0);
   
@@ -866,7 +908,28 @@ AliMUONReconstructor::Reconstruct(TTree* digitsTree, TTree* clustersTree) const
     }
   }
     
-  FillTreeR(fTriggerStore,*clustersTree);
+  FillTreeR(fTriggerStore,*clustersTree,fTriggerStoreReco);
+}
+
+//_____________________________________________________________________________
+AliMUONTriggerAlgoChecker* AliMUONReconstructor::TriggerAlgoChecker() const
+{
+  /// Return trigger algorithm checker
+  /// (create it if necessary)
+  if ( ! fTriggerAlgoChecker ) fTriggerAlgoChecker = new AliMUONTriggerAlgoChecker();
+  return fTriggerAlgoChecker;
+}
+
+//_____________________________________________________________________________
+AliMUONTriggerElectronics* AliMUONReconstructor::TriggerElectronics() const
+{
+  /// Return trigger electronics
+  /// (create it if necessary)
+  if ( ! fTriggerProcessor ) {
+    if ( ! fCalibrationData ) CreateCalibrationData();
+    fTriggerProcessor = new AliMUONTriggerElectronics(fCalibrationData);
+  }
+  return fTriggerProcessor;
 }
 
 //_____________________________________________________________________________
@@ -890,4 +953,27 @@ AliMUONReconstructor::TriggerStore() const
     }
   }
   return fTriggerStore;
+}
+
+//_____________________________________________________________________________
+AliMUONVTriggerStore*
+AliMUONReconstructor::TriggerStoreReco() const
+{
+  /// Return (and create if necessary and allowed) the trigger container
+  TString sopt(GetOption());
+  sopt.ToUpper();
+
+  if (sopt.Contains("TRIGGERDISABLE"))
+  {
+    delete fTriggerStoreReco;
+    fTriggerStoreReco = 0x0;
+  }
+  else
+  {
+    if (!fTriggerStoreReco)
+    {
+      fTriggerStoreReco = new AliMUONTriggerStoreV2;
+    }
+  }
+  return fTriggerStoreReco;
 }

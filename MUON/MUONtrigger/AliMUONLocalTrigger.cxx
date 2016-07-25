@@ -60,7 +60,10 @@ AliMUONLocalTrigger::AliMUONLocalTrigger()
     fY4Pattern(0),
 
     fHitPatternFromResponse(0xFF),
-    fTriggerWithoutChamber(0)
+    fTriggerWithoutChamber(0),
+
+    fAlgoErrors(0),
+    fIsRecomputed(0)
 {
 /// Default constructor
 }
@@ -87,7 +90,10 @@ AliMUONLocalTrigger::AliMUONLocalTrigger(const AliMUONLocalTrigger& theMUONLocal
       fY4Pattern(theMUONLocalTrig.fY4Pattern),
 
       fHitPatternFromResponse(theMUONLocalTrig.fHitPatternFromResponse),
-      fTriggerWithoutChamber(theMUONLocalTrig.fTriggerWithoutChamber)
+      fTriggerWithoutChamber(theMUONLocalTrig.fTriggerWithoutChamber),
+
+      fAlgoErrors(theMUONLocalTrig.fAlgoErrors),
+      fIsRecomputed(theMUONLocalTrig.fIsRecomputed)
 {
 /// Copy constructor (useful for TClonesArray)
 
@@ -132,6 +138,9 @@ AliMUONLocalTrigger& AliMUONLocalTrigger::operator=(const AliMUONLocalTrigger& t
 
   fHitPatternFromResponse = theMUONLocalTrig.fHitPatternFromResponse;
   fTriggerWithoutChamber = theMUONLocalTrig.fTriggerWithoutChamber;
+
+  fAlgoErrors = theMUONLocalTrig.fAlgoErrors;
+  fIsRecomputed = theMUONLocalTrig.fIsRecomputed;
 
   return *this;
 }

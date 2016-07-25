@@ -53,6 +53,8 @@
 
 #pragma link C++ class AliMUONESDInterface+;
 
+#pragma link C++ class AliMUONTriggerAlgoChecker+;
+
 // QA
 #pragma link C++ class AliMUONQADataMakerRec+;
 #pragma link C++ class AliMUONTrackerQADataMakerRec+;

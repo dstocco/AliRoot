@@ -72,6 +72,7 @@ set(SRCS
     AliMUONTrackReconstructor.cxx
     AliMUONTrackReconstructorK.cxx
     AliMUONTrackStoreV1.cxx
+    AliMUONTriggerAlgoChecker.cxx
     AliMUONTriggerQADataMakerRec.cxx
     AliMUONTriggerTrack.cxx
     AliMUONTriggerTrackStoreV1.cxx

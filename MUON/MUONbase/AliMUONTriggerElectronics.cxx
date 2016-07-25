@@ -589,6 +589,8 @@ void AliMUONTriggerElectronics::Digits2Trigger(const AliMUONVDigitStore& digitSt
             localTrigger.SetY2Pattern(board->GetXY(1,1));
             localTrigger.SetY3Pattern(board->GetXY(1,2));
             localTrigger.SetY4Pattern(board->GetXY(1,3));
+
+            localTrigger.SetIsRecomputedResponse(kTRUE);
             
             //             ADD A NEW LOCAL TRIGGER          
             triggerStore.Add(localTrigger);  

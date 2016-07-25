@@ -55,14 +55,15 @@ public:
   
   virtual Int_t GetSize() const;
   
-private:
+protected:
   /// Return the address of the array of global trigger information
   TClonesArray** GlobalPtr() const { return const_cast<TClonesArray**>(&fGlobal); }
   /// Return the address of the array of local trigger information
   TClonesArray** LocalPtr() const { return const_cast<TClonesArray**>(&fLocal); }
   /// Return the address of the array of regional trigger information
   TClonesArray** RegionalPtr() const { return const_cast<TClonesArray**>(&fRegional); }
-  
+
+private:
   /// Not implemented
   AliMUONTriggerStoreV1(const AliMUONTriggerStoreV1&);
   /// Not implemented

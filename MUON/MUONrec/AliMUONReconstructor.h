@@ -24,16 +24,17 @@ class AliMUONDigitCalibrator;
 class AliMUONDigitMaker;
 class AliMUONGeometryTransformer;
 class AliMUONTracker;
+class AliMUONTriggerAlgoChecker;
 class AliMUONTriggerCircuit;
+class AliMUONTriggerElectronics;
+class AliMUONTriggerUtilities;
 class AliMUONVClusterFinder;
 class AliMUONVClusterServer;
 class AliMUONVClusterStore;
 class AliMUONVDigitStore;
 class AliMUONVTrackStore;
 class AliMUONVTriggerStore;
-class AliMUONTriggerElectronics;
 class TClonesArray;
-class AliMUONTriggerUtilities;
 
 #include "AliMUONRecoParam.h"
 
@@ -66,7 +67,8 @@ private:
   
   void ConvertDigits(AliRawReader* rawReader, 
                      AliMUONVDigitStore* digitStore,
-                     AliMUONVTriggerStore* triggerStore) const;
+                     AliMUONVTriggerStore* triggerStore,
+                     AliMUONVTriggerStore* triggerStoreReco = nullptr) const;
   void Calibrate(AliMUONVDigitStore& digitStore) const;
   void CreateCalibrationData() const;
   void CreateCalibrator() const;
@@ -75,10 +77,14 @@ private:
   void CreateTriggerUtilities() const;
   AliMUONVClusterServer* CreateClusterServer(const AliMUONRecoParam& rp) const;
   void FillTreeR(AliMUONVTriggerStore* triggerStore,
-                 TTree& clustersTree) const;
+                 TTree& clustersTree,
+                 AliMUONVTriggerStore* triggerStoreReco = nullptr) const;
   
   AliMUONVDigitStore* DigitStore() const;
   AliMUONVTriggerStore* TriggerStore() const;
+  AliMUONVTriggerStore* TriggerStoreReco() const;
+  AliMUONTriggerElectronics* TriggerElectronics() const;
+  AliMUONTriggerAlgoChecker* TriggerAlgoChecker() const;
   void ResponseRemovingChambers(AliMUONVTriggerStore* triggerStore) const;
   
 private:
@@ -90,15 +96,17 @@ private:
   mutable AliMUONCalibrationData* fCalibrationData; //!<! Calibration data
   mutable AliMUONDigitCalibrator* fDigitCalibrator; //!<!  Digit to calibrate digit converter
   mutable AliMUONVTriggerStore* fTriggerStore; //!<! Trigger container
+  mutable AliMUONVTriggerStore* fTriggerStoreReco; //!<! Trigger container for reconstructed response
   mutable AliMUONVTrackStore* fTrackStore; //!<! Track container
   mutable AliMUONVClusterStore* fClusterStore; //!<! cluster store (when not in combined tracking mode)
   mutable AliMUONTriggerElectronics* fTriggerProcessor; //!<! Processor to recalculate trigger response
   mutable AliMUONTriggerUtilities* fTriggerUtilities; //!<! Trigger utilities for masks
+  mutable AliMUONTriggerAlgoChecker* fTriggerAlgoChecker; //!<! Trigger algorithm checker
   mutable TObjArray fClusterServers; //!<!  Clusterizers (one per event specie)
   mutable TObjArray fTrackers; //!<! trackers (one per event specie)
   mutable Bool_t fShouldCalibrate; // whether the fDigitCalibrator should be non-null
   
-  ClassDef(AliMUONReconstructor,12) // Implementation of AliReconstructor
+  ClassDef(AliMUONReconstructor,13) // Implementation of AliReconstructor
 };
 
 #endif

@@ -23,7 +23,19 @@ class AliMUONLocalTrigger : public TObject {
   AliMUONLocalTrigger();
   AliMUONLocalTrigger(const AliMUONLocalTrigger& rhs); // copy constructor !
   virtual ~AliMUONLocalTrigger();
-  AliMUONLocalTrigger& operator=(const AliMUONLocalTrigger& rhs); 
+  AliMUONLocalTrigger& operator=(const AliMUONLocalTrigger& rhs);
+
+  enum {
+    kErrYcopyNeighbour = 1<<0,
+    kErrYcopy          = 1<<1,
+    kErrYpos           = 1<<2,
+    kErrYtrig          = 1<<3,
+    kErrXpos           = 1<<4,
+    kErrXdev           = 1<<5,
+    kErrLoDecision     = 1<<6,
+    kErrLoLpt          = 1<<7,
+    kErrLoHpt          = 1<<8
+  };
 
   // getter methods
   //
@@ -83,6 +95,12 @@ class AliMUONLocalTrigger : public TObject {
   /// Triggers from the re-calculated trigger response after removing chambers one-by-one
   UChar_t GetTriggerWithoutChamber() const {return fTriggerWithoutChamber; }
 
+  /// Get algorithm errors
+  UShort_t GetAlgoErrors () const { return fAlgoErrors; }
+
+  /// Get flag stating if the trigger response was recomputed
+  Bool_t IsRecomputedResponse () const { return fIsRecomputed; }
+
   // setter methods
   //
            /// Set Circuit number
@@ -123,7 +141,19 @@ class AliMUONLocalTrigger : public TObject {
   void SetLocalStruct(Int_t loCircuit, AliMUONLocalStruct& localStruct);
   void SetLocalStruct(Int_t loCircuit, const AliMUONRawStreamTriggerHP::AliLocalStruct& localStruct);
 
+  /// Set algorithm errors
+  void SetAlgoErrors ( UShort_t algoErrors ) { fAlgoErrors = algoErrors; }
+
+  /// Set flag stating if the trigger response was recomputed
+  void SetIsRecomputedResponse ( Bool_t isRecomputed ) { fIsRecomputed = isRecomputed; }
+
   Bool_t IsNull() const;
+
+  /// Algorithm errors affects the trigger track
+  static Bool_t AlgoErrAffectsTrigTrackReco ( UShort_t algoErrors ) { return (algoErrors & (kErrXpos|kErrXdev|kErrYpos|kErrYtrig)); }
+
+  /// Algorithm errors affects the trigger track
+  Bool_t AlgoErrAffectsTrigTrackReco () const { return AlgoErrAffectsTrigTrackReco(fAlgoErrors); }
   
   virtual void Print(Option_t* opt="") const;
   
@@ -155,15 +185,12 @@ private:
   UShort_t fY3Pattern; ///< Y strip pattern for chamber 21
   UShort_t fY4Pattern; ///< Y strip pattern for chamber 22
 
-  UShort_t fHitPatternFromResponse; ///<  Fired plane according to re-computed repsonse
+  UShort_t fHitPatternFromResponse; ///<  Fired plane according to re-computed response
   UChar_t fTriggerWithoutChamber; ///< Pattern of triggers after chamber removal
 
-  ClassDef(AliMUONLocalTrigger,5)  // reconstructed Local Trigger object
+  UShort_t fAlgoErrors; ///< Algorithm errors
+  Bool_t fIsRecomputed; ///< Recomputed response
+
+  ClassDef(AliMUONLocalTrigger,6)  // reconstructed Local Trigger object
 };
 #endif
-
-
-
-
-
-

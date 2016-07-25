@@ -64,6 +64,7 @@ set(SRCS
     AliMUONTriggerElectronics.cxx
     AliMUONTriggerQAChecker.cxx
     AliMUONTriggerStoreV1.cxx
+    AliMUONTriggerStoreV2.cxx
     AliMUONTriggerUtilities.cxx
     AliMUONVCluster.cxx
     AliMUONVDigit.cxx
