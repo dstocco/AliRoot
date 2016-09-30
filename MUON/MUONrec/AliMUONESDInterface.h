@@ -53,6 +53,8 @@ public: // methods to play with internal objects
   AliMUONVDigitStore* GetDigits() const {return fDigits;}
   /// Return internal trigger store
   AliMUONVTriggerStore* GetTriggers() const {return fTriggers;}
+  /// Return internal trigger store with recomputed response
+  AliMUONVTriggerStore* GetRecoTriggers() const {return fRecoTriggers;}
   
   // Return numbers of tracks/clusters/digits
   Int_t GetNTracks() const;
@@ -63,6 +65,7 @@ public: // methods to play with internal objects
   Int_t GetNDigits(UInt_t trackId, UInt_t clusterId) const;
   Int_t GetNDigitsInCluster(UInt_t clusterId) const;
   Int_t GetNTriggers() const;
+  Int_t GetNRecoTriggers() const;
   
   // Check that all digits have been stored for a given track
   Bool_t DigitsStored(UInt_t trackId) const;
@@ -72,7 +75,7 @@ public: // methods to play with internal objects
   AliMUONVCluster*     FindCluster(UInt_t clusterId) const;
   AliMUONVCluster*     FindCluster(UInt_t trackId, UInt_t clusterId) const;
   AliMUONVDigit*       FindDigit(UInt_t digitId) const;
-  AliMUONLocalTrigger* FindLocalTrigger(Int_t boardNumber) const;
+  AliMUONLocalTrigger* FindLocalTrigger(Int_t boardNumber,Bool_t isRecomputed = kFALSE) const;
   
   // iterate over internal MUON objects
   TIterator* CreateTrackIterator() const;
@@ -83,6 +86,7 @@ public: // methods to play with internal objects
   TIterator* CreateDigitIterator(UInt_t trackId, UInt_t clusterId) const;
   TIterator* CreateDigitIteratorInCluster(UInt_t clusterId) const;
   TIterator* CreateLocalTriggerIterator() const;
+  TIterator* CreateLocalRecoTriggerIterator() const;
   
   
 public: // static methods
@@ -100,7 +104,9 @@ public: // static methods
   static void UseDigitStore(TString name) {fgDigitStoreName = name;}
   /// Set the version of trigger store
   static void UseTriggerStore(TString name) {fgTriggerStoreName = name;}
-  
+  /// Set the version of reconstructed trigger store
+  static void UseRecoTriggerStore(TString name) {fgRecoTriggerStoreName = name;}
+
   // Create empty stores (use the version defined in this interface)
   static AliMUONVTrackStore* NewTrackStore();
   static AliMUONVClusterStore* NewClusterStore();
@@ -108,6 +114,7 @@ public: // static methods
   static AliMUONVDigitStore* NewDigitStore();
   static AliMUONVDigit* NewDigit();
   static AliMUONVTriggerStore* NewTriggerStore();
+  static AliMUONVTriggerStore* NewRecoTriggerStore();
   static AliMUONVTriggerTrackStore* NewTriggerTrackStore();
   
   // ESD track parameters --> MUON track parameters
@@ -170,12 +177,14 @@ private:
   static TString fgClusterStoreName; ///< class name of the cluster store to use
   static TString fgDigitStoreName;   ///< class name of the digit store to use
   static TString fgTriggerStoreName; ///< class name of the trigger store to use
+  static TString fgRecoTriggerStoreName; ///< class name of the recomputed trigger store to use
   static TString fgTriggerTrackStoreName; ///< class name of the trigger track store to use
   
   // data containers
   AliMUONVTrackStore*   fTracks;   ///< track container
   AliMUONVDigitStore*   fDigits;   ///< digit container
   AliMUONVTriggerStore* fTriggers; ///< trigger container
+  AliMUONVTriggerStore* fRecoTriggers; ///< recomputed trigger container
   
   // maps (to speed up data retrieval)
   AliMpExMap* fClusterMap; ///< map of clusters
@@ -186,4 +195,3 @@ private:
 };
 
 #endif
-

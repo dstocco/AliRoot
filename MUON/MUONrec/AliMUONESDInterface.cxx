@@ -85,6 +85,7 @@ TString AliMUONESDInterface::fgTrackStoreName = "AliMUONTrackStoreV1";
 TString AliMUONESDInterface::fgClusterStoreName = "AliMUONClusterStoreV2";
 TString AliMUONESDInterface::fgDigitStoreName = "AliMUONDigitStoreV2R";
 TString AliMUONESDInterface::fgTriggerStoreName = "AliMUONTriggerStoreV1";
+TString AliMUONESDInterface::fgRecoTriggerStoreName = "AliMUONTriggerStoreV2";
 TString AliMUONESDInterface::fgTriggerTrackStoreName = "AliMUONTriggerTrackStoreV1";
 
 //_____________________________________________________________________________
@@ -93,6 +94,7 @@ AliMUONESDInterface::AliMUONESDInterface()
 fTracks(0x0),
 fDigits(0x0),
 fTriggers(0x0),
+fRecoTriggers(0x0),
 fClusterMap(0x0),
 fDigitMap(0x0)
 {
@@ -106,6 +108,7 @@ AliMUONESDInterface::~AliMUONESDInterface()
   delete fTracks;
   delete fDigits;
   delete fTriggers;
+  delete fRecoTriggers;
   delete fClusterMap;
   delete fDigitMap;
 }
@@ -121,6 +124,7 @@ void AliMUONESDInterface::Clear(Option_t*)
   delete fTracks; fTracks = 0x0;
   delete fDigits; fDigits = 0x0;
   delete fTriggers; fTriggers = 0x0;
+  delete fRecoTriggers; fRecoTriggers = 0x0;
   delete fClusterMap; fClusterMap = 0x0;
   delete fDigitMap; fDigitMap = 0x0;
 }
@@ -138,7 +142,10 @@ void AliMUONESDInterface::Reset()
   
   if (fTriggers) fTriggers->Clear("C");
   else fTriggers = NewTriggerStore();
-  
+
+  if (fRecoTriggers) fRecoTriggers->Clear("C");
+  else fRecoTriggers = NewRecoTriggerStore();
+
   if (fClusterMap) fClusterMap->Clear();
   else fClusterMap = new AliMpExMap;
   fClusterMap->SetOwner(kTRUE);
@@ -167,7 +174,15 @@ void AliMUONESDInterface::LoadEvent(AliESDEvent& esdEvent, Bool_t refit)
     AliESDMuonTrack* esdTrack = esdEvent.GetMuonTrack(iTrack);
     
     // fill trigger store if related info are availables
-    if (esdTrack->ContainTriggerData()) Add(*esdTrack, *fTriggers);
+    if (esdTrack->ContainTriggerData()) {
+      if ( esdTrack->IsRecomputedTrigger() ) Add(*esdTrack,*fRecoTriggers);
+      else {
+        // This condition means that the raw response and the reconstructed response are the same
+        // in this case, fill also the reconstructed triggers with the same value
+        if ( ! AliMUONLocalTrigger::AlgoErrAffectsTrigTrackReco(esdTrack->GetTriggerAlgoErrors()) ) Add(*esdTrack,*fRecoTriggers);
+        Add(*esdTrack, *fTriggers);
+      }
+    }
     
     // fill tracker data if availables
     if (!esdTrack->ContainTrackerData()) continue;
@@ -285,6 +300,13 @@ Int_t AliMUONESDInterface::GetNTriggers() const
 }
 
 //___________________________________________________________________________
+Int_t AliMUONESDInterface::GetNRecoTriggers() const
+{
+  /// return the number of recomputed triggers
+  return fRecoTriggers ? fRecoTriggers->GetSize() : 0;
+}
+
+//___________________________________________________________________________
 Bool_t AliMUONESDInterface::DigitsStored(UInt_t trackId) const
 {
   /// return kTRUE if digits have been stored for all clusters of track "trackId"
@@ -347,10 +369,11 @@ AliMUONVDigit* AliMUONESDInterface::FindDigit(UInt_t digitId) const
 }
 
 //___________________________________________________________________________
-AliMUONLocalTrigger* AliMUONESDInterface::FindLocalTrigger(Int_t boardNumber) const
+AliMUONLocalTrigger* AliMUONESDInterface::FindLocalTrigger(Int_t boardNumber,Bool_t isRecomputed) const
 {
   /// return MUON local trigger "boardNumber"
-  return (fTriggers) ? fTriggers->FindLocal(boardNumber) : 0x0;
+  AliMUONVTriggerStore* currStore = ( isRecomputed ) ? fRecoTriggers : fTriggers;
+  return (currStore) ? currStore->FindLocal(boardNumber) : 0x0;
 }
 
 //___________________________________________________________________________
@@ -426,6 +449,13 @@ TIterator* AliMUONESDInterface::CreateLocalTriggerIterator() const
 {
   /// return iterator over all local trigger
   return fTriggers ? fTriggers->CreateLocalIterator() : 0x0;
+}
+
+//___________________________________________________________________________
+TIterator* AliMUONESDInterface::CreateLocalRecoTriggerIterator() const
+{
+  /// return iterator over all recomputed local trigger
+  return fRecoTriggers ? fRecoTriggers->CreateLocalIterator() : 0x0;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -551,6 +581,18 @@ AliMUONVTriggerStore* AliMUONESDInterface::NewTriggerStore()
     return 0x0;
   }
   return reinterpret_cast<AliMUONVTriggerStore*>(gROOT->ProcessLineFast(Form("new %s()",fgTriggerStoreName.Data())));
+}
+
+//_____________________________________________________________________________
+AliMUONVTriggerStore* AliMUONESDInterface::NewRecoTriggerStore()
+{
+  /// Create an empty trigger store of type fgRecoTriggerStoreName
+  TClass* classPtr = TClass::GetClass(fgRecoTriggerStoreName);
+  if (!classPtr || !classPtr->InheritsFrom("AliMUONVTriggerStore")) {
+    AliErrorClass(Form("Unable to create store of type %s", fgRecoTriggerStoreName.Data()));
+    return 0x0;
+  }
+  return reinterpret_cast<AliMUONVTriggerStore*>(gROOT->ProcessLineFast(Form("new %s()",fgRecoTriggerStoreName.Data())));
 }
 
 //_____________________________________________________________________________
@@ -1158,4 +1200,3 @@ AliMUONVDigit* AliMUONESDInterface::Add(const AliESDMuonPad& esdPad, AliMUONVDig
   if (digit) ESDToMUON(esdPad, *digit);
   return digit;
 }
-
