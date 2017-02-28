@@ -293,12 +293,12 @@ void AliMFT::CreateMaterials() {
   Int_t    fieldType        = ((AliMagF*)TGeoGlobalMagField::Instance()->GetField())->Integ();     // Field type
   Double_t maxField         = ((AliMagF*)TGeoGlobalMagField::Instance()->GetField())->Max();     // Field max.
   
-  AliMixture(kAir,"Air$", aAir, zAir, dAir, nAir, wAir);
-  AliMedium(kAir,    "Air$", kAir, unsens, fieldType, maxField, tmaxfd, stemax, deemax, epsil, stmin);
+  AliMixture(++matId,"Air$", aAir, zAir, dAir, nAir, wAir);
+  AliMedium(kAir,    "Air$", matId, unsens, fieldType, maxField, tmaxfd, stemax, deemax, epsil, stmin);
   //
   //     Vacuum
-  AliMixture(kVacuum, "Vacuum$", aAir, zAir, dAirVacuum, nAir, wAir);
-  AliMedium(kVacuum,  "Vacuum$", kVacuum, unsens, itgfld, maxfld, tmaxfd, stemax, deemax, epsil, stmin);
+  AliMixture(++matId, "Vacuum$", aAir, zAir, dAirVacuum, nAir, wAir);
+  AliMedium(kVacuum,  "Vacuum$", matId, unsens, itgfld, maxfld, tmaxfd, stemax, deemax, epsil, stmin);
 
   AliMaterial(++matId, "Si$", aSi, zSi, dSi, radSi, absSi);
   AliMedium(kSi,       "Si$", matId, sens, fieldType, maxField, tmaxfdSi, stemaxSi, deemaxSi, epsilSi, stminSi);
@@ -324,7 +324,7 @@ void AliMFT::CreateMaterials() {
   maxStepSize      = .01;
   precision        = .003;
   minStepSize      = .003;
-  AliMaterial(matId, "Carbon$", aCarb, zCarb, dCarb, radCarb, absCarb);
+  AliMaterial(++matId, "Carbon$", aCarb, zCarb, dCarb, radCarb, absCarb);
   AliMedium(kCarbon, "Carbon$", matId,0,fieldType,maxField,maxBending,
             maxStepSize,maxEnergyLoss,precision,minStepSize);
 
