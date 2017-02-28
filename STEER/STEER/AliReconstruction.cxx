@@ -2011,6 +2011,7 @@ void AliReconstruction::SlaveBegin(TTree*)
   if (!fWriteHLTESD) AliInfo("Writing of HLT ESD tree is disabled");
   else AliInfoF("%.2f%% of HLT ESD events will be stored",fFractionHLTESD*100.0);
   AliInfoF("%.2f%% of ESD friends  will be stored",fFractionFriends*100.0);
+  if (fSkipFriendsForLargeZ) AliInfoF("Disable friends for TPC-only tracks with |Z|>%.1f",fSkipFriendsCutZ);
 
   return;
 }
