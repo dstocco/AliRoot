@@ -12,11 +12,11 @@ class AliDataFile {
       return TFile::Open(GetFileName(url).c_str(), opts);
     }
     static TFile *OpenOADB(const std::string &url, Option_t *opts="") {
-      return Open(GetFileNameOADB(url), opts);
+      return TFile::Open(GetFileNameOADB(url).c_str(), opts);
     }
 
   /// \cond CLASSIMP
-  ClassDef(AliDataFile, 0);
+  ClassDef(AliDataFile, 1);
   /// \endcond
 };
 
