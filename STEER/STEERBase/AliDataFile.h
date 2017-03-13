@@ -16,7 +16,7 @@ class AliDataFile {
     }
 
   /// \cond CLASSIMP
-  ClassDef(AliDataFile, 1);
+  ClassDef(AliDataFile, 0);
   /// \endcond
 };
 
