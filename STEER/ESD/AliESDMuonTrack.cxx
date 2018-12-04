@@ -71,6 +71,7 @@ AliESDMuonTrack::AliESDMuonTrack ():
   fHitsPatternInTrigCh(0),
   fHitsPatternInTrigChTrk(0),
   fNHit(0),
+  fLocalTriggerInfoError(0),
   fClusters(0x0),
   fClustersId(0x0),
   fLabel(-1),
@@ -120,6 +121,7 @@ AliESDMuonTrack::AliESDMuonTrack (const AliESDMuonTrack& muonTrack):
   fHitsPatternInTrigCh(muonTrack.fHitsPatternInTrigCh),
   fHitsPatternInTrigChTrk(muonTrack.fHitsPatternInTrigChTrk),
   fNHit(muonTrack.fNHit),
+  fLocalTriggerInfoError(muonTrack.fLocalTriggerInfoError),
   fClusters(0x0),
   fClustersId(0x0),
   fLabel(muonTrack.fLabel),
@@ -184,6 +186,7 @@ AliESDMuonTrack& AliESDMuonTrack::operator=(const AliESDMuonTrack& muonTrack)
   fChi2                   = muonTrack.fChi2;             
   fNHit                   = muonTrack.fNHit; 
 
+  fLocalTriggerInfoError  = muonTrack.fLocalTriggerInfoError;
   fLocalTrigger           = muonTrack.fLocalTrigger;  
   fX1Pattern              = muonTrack.fX1Pattern;  
   fY1Pattern              = muonTrack.fY1Pattern;  
@@ -707,4 +710,22 @@ void AliESDMuonTrack::AddMuonTrigDevSignInfo ( UInt_t &pattern ) const
   // Then add info
   UInt_t info = ((UInt_t)(GetMuonTrigDevSign()+2)&0x3)<<30;
   pattern |= info;
+}
+
+
+//_____________________________________________________________________________
+void AliESDMuonTrack::SetTriggerAlgoErrors ( UShort_t algoErrors )
+{
+  /// Set algorithm errors
+  fLocalTriggerInfoError &= 0xFFFF0000;
+  fLocalTriggerInfoError |= (algoErrors & 0xFFFF);
+}
+
+
+//_____________________________________________________________________________
+void AliESDMuonTrack::SetIsRecomputedTrigger ( Bool_t isRecomputed )
+{
+  /// Set flag stating if the trigger response was recomputed
+  if ( isRecomputed ) SETBIT(fLocalTriggerInfoError,16);
+  else CLRBIT(fLocalTriggerInfoError,16);
 }

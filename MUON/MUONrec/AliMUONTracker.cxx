@@ -79,11 +79,13 @@ fTrackHitPatternMaker(0x0),
 fTrackReco(0x0),
 fClusterStore(0x0),
 fTriggerStore(0x0),
+fRecoTriggerStore(0x0),
 fClusterServer(clusterServer), 
 fIsOwnerOfClusterServer(kFALSE),
 fkDigitStore(digitStore), // not owner
 fInputClusterStore(0x0),
 fTriggerTrackStore(0x0),
+fRecoTriggerTrackStore(0x0),
 fkRecoParam(recoParam),
 fInternalTrackStore(0x0)
 {
@@ -115,9 +117,11 @@ AliMUONTracker::~AliMUONTracker()
   delete fTrackHitPatternMaker;
   delete fClusterStore;
   delete fTriggerStore;
+  delete fRecoTriggerStore;
   if ( fIsOwnerOfClusterServer ) delete fClusterServer;
   delete fInputClusterStore;
   delete fTriggerTrackStore;
+  delete fRecoTriggerTrackStore;
   delete fInternalTrackStore;
 }
 
@@ -146,6 +150,18 @@ AliMUONTracker::TriggerTrackStore() const
 }
 
 //_____________________________________________________________________________
+AliMUONVTriggerTrackStore*
+AliMUONTracker::RecoTriggerTrackStore() const
+{
+  /// Return (and create if necessary) the trigger track container
+  if (!fRecoTriggerTrackStore)
+  {
+    fRecoTriggerTrackStore = new AliMUONTriggerTrackStoreV1;
+  }
+  return fRecoTriggerTrackStore;
+}
+
+//_____________________________________________________________________________
 Int_t AliMUONTracker::LoadClusters(TTree* clustersTree)
 {
   /// Load triggerStore from clustersTree
@@ -165,7 +181,18 @@ Int_t AliMUONTracker::LoadClusters(TTree* clustersTree)
     AliError("Could not get triggerStore");
     return 2;
   }
-  
+
+  if ( !fRecoTriggerStore )
+  {
+    fRecoTriggerStore = AliMUONVTriggerStore::Create(*clustersTree,kTRUE);
+  }
+
+  if (!fRecoTriggerStore)
+  {
+    AliError("Could not get recomputed triggerStore");
+    return 2;
+  }
+
   if (!fInputClusterStore) 
   {
     fInputClusterStore = AliMUONVClusterStore::Create(*clustersTree);
@@ -193,6 +220,8 @@ Int_t AliMUONTracker::LoadClusters(TTree* clustersTree)
   fInputClusterStore->Connect(*clustersTree,kFALSE);
   fTriggerStore->Clear();
   fTriggerStore->Connect(*clustersTree,kFALSE);
+  fRecoTriggerStore->Clear();
+  fRecoTriggerStore->Connect(*clustersTree,kFALSE);
   
   clustersTree->GetEvent(0);
 
@@ -234,11 +263,18 @@ Int_t AliMUONTracker::Clusters2Tracks(AliESDEvent* esd)
     return 3;
   }
 
+  if (!fRecoTriggerStore) {
+    AliError("Recomputed TriggerStore is NULL");
+    return 3;
+  }
+
   // Make trigger tracks
   if ( fkTriggerCircuit ) 
   {
     TriggerTrackStore()->Clear();
     fTrackReco->EventReconstructTrigger(*fkTriggerCircuit,*fTriggerStore,*(TriggerTrackStore()));
+    // Add tracks from recomputed trigger information
+    fTrackReco->EventReconstructTrigger(*fkTriggerCircuit,*fRecoTriggerStore,*(RecoTriggerTrackStore()));
   }
   
   if ( TriggerTrackStore()->GetSize() > GetRecoParam()->GetMaxTriggerTracks() ) 
@@ -320,7 +356,7 @@ void AliMUONTracker::FillESD(const AliMUONVTrackStore& trackStore, AliESDEvent* 
   AliMUONTriggerTrack *triggerTrack;
   TIter itTriggerTrack(fTriggerTrackStore->CreateIterator());
   while ( ( triggerTrack = static_cast<AliMUONTriggerTrack*>(itTriggerTrack()) ) ) {
-    
+
     locTrg = static_cast<AliMUONLocalTrigger*>(fTriggerStore->FindLocal(triggerTrack->GetLoTrgNum()));
     
     // check if this local trigger has already been matched
@@ -333,6 +369,20 @@ void AliMUONTracker::FillESD(const AliMUONVTrackStore& trackStore, AliESDEvent* 
 
     AliMUONESDInterface::MUONToESD(*locTrg, *esd, ghostId, triggerTrack);
     
+    ghostId -= 1;
+  }
+
+  // Fill the recomputed local trigger decision
+  // We did not match with the trigger on purpose (the raw trigger decision is the default one), so all tracks are ghosts
+  TIter itRecoTriggerTrack(fRecoTriggerTrackStore->CreateIterator());
+  while ( ( triggerTrack = static_cast<AliMUONTriggerTrack*>(itRecoTriggerTrack()) ) ) {
+    locTrg = static_cast<AliMUONLocalTrigger*>(fRecoTriggerStore->FindLocal(triggerTrack->GetLoTrgNum()));
+
+    // Fill only recomputed tracks for which the algorithm errors can give different responses with respect to the standard ones
+    if ( ! locTrg->AlgoErrAffectsTrigTrackReco() ) continue;
+
+    AliMUONESDInterface::MUONToESD(*locTrg, *esd, ghostId, triggerTrack);
+
     ghostId -= 1;
   }
   
@@ -419,5 +469,3 @@ AliMUONTracker::SetupClusterServer(AliMUONVClusterServer& clusterServer)
     }
   }
 }
-
-

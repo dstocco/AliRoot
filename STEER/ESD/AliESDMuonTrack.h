@@ -243,6 +243,14 @@ public:
 
   AliESDEvent* GetESDEvent() const {return fESDEvent;}
   void         SetESDEvent(AliESDEvent* evt) {fESDEvent = evt;}  
+
+  void SetTriggerAlgoErrors ( UShort_t algoErrors );
+  UShort_t GetTriggerAlgoErrors () const { return fLocalTriggerInfoError & 0xFFFF; }
+
+  void SetIsRecomputedTrigger ( Bool_t isRecomputed );
+  /// Get flag stating if the trigger response was recomputed
+  Bool_t IsRecomputedTrigger () const { return TESTBIT(fLocalTriggerInfoError,16); }
+
   
 protected:
   // parameters at vertex
@@ -297,6 +305,7 @@ protected:
   UShort_t fHitsPatternInTrigCh;   ///< Word containing info on the hits left in trigger chambers
   UInt_t  fHitsPatternInTrigChTrk; ///< Trigger hit map from tracker track extrapolation
   UChar_t  fNHit;                  ///< number of clusters attached to the track
+  UInt_t fLocalTriggerInfoError;   ///< Info on local trigger and algorithm errors
   
   mutable TClonesArray* fClusters; ///< Array of clusters attached to the track -- deprecated
   
@@ -306,7 +315,7 @@ protected:
 
   AliESDEvent*   fESDEvent; //!Pointer back to event to which the track belongs
   
-  ClassDef(AliESDMuonTrack,15) // MUON ESD track class 
+  ClassDef(AliESDMuonTrack,16) // MUON ESD track class
 };
 
 #endif 

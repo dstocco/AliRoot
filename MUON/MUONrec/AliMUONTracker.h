@@ -69,6 +69,7 @@ private:
   AliMUONVClusterStore* ClusterStore() const;
 
   AliMUONVTriggerTrackStore* TriggerTrackStore() const;
+  AliMUONVTriggerTrackStore* RecoTriggerTrackStore() const;
   
   void FillESD(const AliMUONVTrackStore& trackStore, AliESDEvent* esd) const;
 
@@ -81,11 +82,13 @@ private:
   AliMUONVTrackReconstructor* fTrackReco; //!<! track reconstructor
   mutable AliMUONVClusterStore* fClusterStore; //!<! cluster container
   AliMUONVTriggerStore* fTriggerStore; //!<! trigger information
+  AliMUONVTriggerStore* fRecoTriggerStore; //!<! recomputed trigger information
   AliMUONVClusterServer* fClusterServer; //!<! to get clusters
   Bool_t fIsOwnerOfClusterServer; //!<! whether we are owner of the cluster server
   const AliMUONVDigitStore& fkDigitStore; //!<! digit info to fill in ESD
   mutable AliMUONVClusterStore* fInputClusterStore; //!<! cluster container
   mutable AliMUONVTriggerTrackStore* fTriggerTrackStore; //!<! trigger track store
+  mutable AliMUONVTriggerTrackStore* fRecoTriggerTrackStore; //!<! recomputed trigger track store
   const AliMUONRecoParam* fkRecoParam; //!<! pointer to reco param
   AliMUONVTrackStore* fInternalTrackStore; //!<! internal track store
   

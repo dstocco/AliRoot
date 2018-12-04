@@ -841,7 +841,8 @@ void AliMUONESDInterface::ESDToMUON(const AliESDMuonTrack& esdTrack, AliMUONLoca
   locTrg.SetY2Pattern(esdTrack.GetTriggerY2Pattern());
   locTrg.SetY3Pattern(esdTrack.GetTriggerY3Pattern());
   locTrg.SetY4Pattern(esdTrack.GetTriggerY4Pattern());
-  
+  locTrg.SetAlgoErrors(esdTrack.GetTriggerAlgoErrors());
+  locTrg.SetIsRecomputedResponse(esdTrack.IsRecomputedTrigger());
 }
 
 //_____________________________________________________________________________
@@ -977,6 +978,8 @@ void AliMUONESDInterface::MUONToESD(const AliMUONTrack& track, AliESDMuonTrack& 
     esdTrack.SetTriggerY3Pattern(locTrg->GetY3Pattern());
     esdTrack.SetTriggerX4Pattern(locTrg->GetX4Pattern());
     esdTrack.SetTriggerY4Pattern(locTrg->GetY4Pattern());
+    esdTrack.SetTriggerAlgoErrors(locTrg->GetAlgoErrors());
+    esdTrack.SetIsRecomputedTrigger(locTrg->IsRecomputedResponse());
   } else {
     esdTrack.SetTriggerX1Pattern(0);
     esdTrack.SetTriggerY1Pattern(0);
@@ -986,6 +989,8 @@ void AliMUONESDInterface::MUONToESD(const AliMUONTrack& track, AliESDMuonTrack& 
     esdTrack.SetTriggerY3Pattern(0);
     esdTrack.SetTriggerX4Pattern(0);
     esdTrack.SetTriggerY4Pattern(0);
+    esdTrack.SetTriggerAlgoErrors(0);
+    esdTrack.SetIsRecomputedTrigger(0);
   }
   
 }
@@ -1027,6 +1032,8 @@ void AliMUONESDInterface::MUONToESD(const AliMUONLocalTrigger& locTrg, AliESDMuo
   esdTrack.SetTriggerY3Pattern(locTrg.GetY3Pattern());
   esdTrack.SetTriggerX4Pattern(locTrg.GetX4Pattern());
   esdTrack.SetTriggerY4Pattern(locTrg.GetY4Pattern());
+  esdTrack.SetTriggerAlgoErrors(locTrg.GetAlgoErrors());
+  esdTrack.SetIsRecomputedTrigger(locTrg.IsRecomputedResponse());
   UShort_t hitPattern = 0;
   esdTrack.SetHitsPatternInTrigChTrk(hitPattern);
   if(triggerTrack){

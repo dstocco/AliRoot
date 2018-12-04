@@ -47,10 +47,11 @@ AliMUONVTriggerStore::~AliMUONVTriggerStore()
 
 //_____________________________________________________________________________
 AliMUONVTriggerStore* 
-AliMUONVTriggerStore::Create(TTree& tree)
+AliMUONVTriggerStore::Create(TTree& tree,Bool_t isRecomputed)
 {
   /// Create a VTriggerStore from the tree (if possible).
-  return static_cast<AliMUONVTriggerStore*>(AliMUONVStore::Create(tree,"Trigger"));
+  const char* pattern = ( isRecomputed ) ? "TrigRec" : "Trigger";
+  return static_cast<AliMUONVTriggerStore*>(AliMUONVStore::Create(tree,pattern));
 }
 
 //_____________________________________________________________________________

@@ -280,6 +280,7 @@ AliMUONTreeManager::DefaultClassName(const char* treeName, const char* pattern) 
   if ( name == "TreeR" ) 
   {
     if ( spattern.Contains("CLUSTER") ) return "AliMUONClusterStoreV1";
+    if ( spattern.Contains("TRIGREC") ) return "AliMUONTriggerStoreV2";
     if ( spattern.Contains("TRIGGER") ) return "AliMUONTriggerStoreV1";
   }
   

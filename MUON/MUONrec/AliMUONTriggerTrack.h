@@ -83,7 +83,14 @@ class AliMUONTriggerTrack : public TObject
     /// Get pt cut level
     Int_t GetPtCutLevel() const {return fPtCutLevel;}
 
-    
+    void SetIsRecomputedResponse ( Bool_t isRecomputed );
+    /// Get stating if the trigger response was recomputed
+    Bool_t IsRecomputedResponse () const { return TESTBIT(fLocalTriggerInfoErrors,0); }
+
+    void SetHasAlgoErrors ( Bool_t hasAlgoErrors );
+    /// Get flag stating if the local trigger had algorithm errors
+    Bool_t HasAlgoErrors () const { return TESTBIT(fLocalTriggerInfoErrors,1); }
+
     virtual void Print(Option_t* opt="FULL") const;
 
     const TMatrixD& GetCovariances() const;
@@ -104,9 +111,10 @@ protected:
   UChar_t fGTPattern; ///< Global trigger pattern  (do not work with static statement)
   Int_t   fPtCutLevel;  ///< Trigger pt cut level as in ESDs (1->Apt; 2->Lpt; 3->Hpt)
   UShort_t fHitsPatternInTrigCh; ///< Word containing info on the hits left in trigger chambers
+  UChar_t fLocalTriggerInfoErrors; ///< Info on local trigger and algorithm errors
   mutable TMatrixD *fCovariances; ///< Covariance matrix of track parameters 
 
-  ClassDef(AliMUONTriggerTrack, 7) // Reconstructed trigger track in ALICE dimuon spectrometer
+  ClassDef(AliMUONTriggerTrack, 8) // Reconstructed trigger track in ALICE dimuon spectrometer
     };
 	
 #endif

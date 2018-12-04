@@ -39,7 +39,7 @@ public:
   using AliMUONVStore::Create;
   
   /// Create a store from the tree (if possible).
-  static AliMUONVTriggerStore* Create(TTree& tree);
+  static AliMUONVTriggerStore* Create(TTree& tree, Bool_t isRecomputed = kFALSE);
   
   /// Create iterator (on local card)
   virtual TIterator* CreateIterator() const;

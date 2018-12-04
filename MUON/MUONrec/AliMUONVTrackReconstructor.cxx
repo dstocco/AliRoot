@@ -1506,6 +1506,9 @@ Bool_t AliMUONVTrackReconstructor::TriggerToTrack(const AliMUONTriggerCircuit& c
   triggerTrack.SetCovariances(trigCov);
   triggerTrack.SetUniqueID(locTrg.GetUniqueID());
 
+  triggerTrack.SetHasAlgoErrors(locTrg.AlgoErrAffectsTrigTrackReco());
+  triggerTrack.SetIsRecomputedResponse(locTrg.IsRecomputedResponse());
+
   return kTRUE;
 
 }

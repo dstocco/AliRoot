@@ -49,6 +49,7 @@ AliMUONTriggerTrack::AliMUONTriggerTrack()
     fGTPattern(0),
     fPtCutLevel(0),
     fHitsPatternInTrigCh(0),
+    fLocalTriggerInfoErrors(0),
     fCovariances(0x0)
 {
   /// default ctr
@@ -67,6 +68,7 @@ AliMUONTriggerTrack::AliMUONTriggerTrack(Float_t x11, Float_t y11, Float_t z11, 
       fGTPattern(theGTPattern),
       fPtCutLevel(ptCutLevel),
       fHitsPatternInTrigCh(0),
+      fLocalTriggerInfoErrors(0),
       fCovariances(0x0)
 {
 /// ctor from local trigger output
@@ -99,6 +101,7 @@ AliMUONTriggerTrack::AliMUONTriggerTrack (const AliMUONTriggerTrack& theMUONTrig
       fGTPattern(theMUONTriggerTrack.fGTPattern),
       fPtCutLevel(theMUONTriggerTrack.fPtCutLevel),
       fHitsPatternInTrigCh(theMUONTriggerTrack.fHitsPatternInTrigCh),
+      fLocalTriggerInfoErrors(theMUONTriggerTrack.fLocalTriggerInfoErrors),
       fCovariances(0x0)
 {
 ///
@@ -131,6 +134,7 @@ theMUONTriggerTrack)
     floTrgNum = theMUONTriggerTrack.floTrgNum;
     fGTPattern = theMUONTriggerTrack.fGTPattern;
     fHitsPatternInTrigCh = theMUONTriggerTrack.fHitsPatternInTrigCh;
+    fLocalTriggerInfoErrors = theMUONTriggerTrack.fLocalTriggerInfoErrors;
 
     if (theMUONTriggerTrack.fCovariances) {
       if (fCovariances) *fCovariances = *(theMUONTriggerTrack.fCovariances);
@@ -158,11 +162,15 @@ AliMUONTriggerTrack::Print(Option_t* opt) const
 /// Printing
   TString optString(opt);
   optString.ToUpper();
-  if ( optString.Contains("FULL") ) optString = "PARAM COV";
+  if ( optString.Contains("FULL") ) optString = "PARAM COV INFO";
 
   if ( optString.Contains("PARAM"))
     cout << Form("(X,Y,Z)11=(%7.2f,%7.2f,%7.2f) Z21=%7.2f Slope(X,Y)=(%7.2f,%7.2f) LocalBoard #%3d GlobalTriggerPattern %x HitsPatternInTrigCh %x",
 		 fx11,fy11,fz11,fz21,fSlopeX,fSlopeY,floTrgNum,fGTPattern,fHitsPatternInTrigCh) << endl;
+
+  if ( optString.Contains("INFO") ) {
+    cout << "Is recomputed response " << IsRecomputedResponse() << "  Has algo errors " << HasAlgoErrors() << endl;
+  }
 
   if ( optString.Contains("COV") ){
     if ( ! fCovariances ) cout << "Covariances not initialized " << endl;
@@ -255,4 +263,21 @@ Bool_t AliMUONTriggerTrack::Match(AliMUONTriggerTrack &track,
     return kFALSE;
   
   return kTRUE;
+}
+
+//__________________________________________________________________________
+void AliMUONTriggerTrack::SetIsRecomputedResponse ( Bool_t isRecomputed )
+{
+  /// Set flag stating if the trigger response was recomputed
+  if ( isRecomputed ) SETBIT(fLocalTriggerInfoErrors,0);
+  else CLRBIT(fLocalTriggerInfoErrors,0);
+}
+
+
+//__________________________________________________________________________
+void AliMUONTriggerTrack::SetHasAlgoErrors ( Bool_t hasAlgoErrors )
+{
+  /// Set flag stating if the local trigger had algorithm errors
+  if ( hasAlgoErrors ) SETBIT(fLocalTriggerInfoErrors,1);
+  else CLRBIT(fLocalTriggerInfoErrors,1);
 }
